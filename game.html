@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Tower: Rise of the Mind</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #9330ff 0%, #049dad 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            font-size: 2.5rem;
+        }
+
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .player {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .player.active {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .player-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .player-1 .player-icon {
+            background-color: #ffe240;
+        }
+
+        .player-2 .player-icon {
+            background-color: #8f6a52;
+        }
+
+        .player-details {
+            flex-grow: 1;
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .player-position {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .board-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            width: 100%;
+            aspect-ratio: 1/1;
+            background-color: #1e3a5f;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+            font-weight: bold;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .cell:nth-child(even) {
+            background-color: #2c4d7a;
+        }
+
+        .cell:nth-child(odd) {
+            background-color: #1e3a5f;
+        }
+
+        .cell.start {
+            background-color: #57cb5c;
+        }
+
+        .cell.finish {
+            background-color: #d71d1d;
+        }
+
+        .snake {
+            background: linear-gradient(135deg, #87251b, #d51500);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .snake::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
+                radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .snake::after {
+            content: "🐍";
+            position: absolute;
+            font-size: 1.2rem;
+            opacity: 0.7;
+        }
+
+        .ladder {
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ladder::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(90deg, transparent 45%, rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.5) 55%, transparent 55%),
+                linear-gradient(90deg, transparent 45%, rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.5) 55%, transparent 55%);
+            background-size: 100% 33.33%;
+            background-position: 0 0, 0 100%;
+        }
+
+        .ladder::after {
+            content: "🪜";
+            position: absolute;
+            font-size: 1.2rem;
+            opacity: 0.7;
+        }
+
+        .player-1-piece {
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    z-index: 20;
+    width: 50px;
+    height: 50px;
+    transition: all 0.5s ease;
+    background-image: url("New Piskel.png");
+    background-size: 122% 122%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+        .player-2-piece {
+    position: absolute;
+    bottom: -22px;
+    right: 0px;
+    width: 70px;
+    height: 70px;
+    z-index: 20;
+    transition: all 0.5s ease;
+
+    background-image: url("New Piskel (2).png"); /* ganti dengan gambar player 2 */
+    background-size: 120% 120%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .dice-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .dice {
+            width: 80px;
+            height: 80px;
+            background-color: white;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .dice:hover {
+            transform: scale(1.05);
+        }
+
+        .dice:active {
+            transform: scale(0.95);
+        }
+
+        .game-message {
+            font-size: 1.2rem;
+            text-align: center;
+            min-height: 30px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            width: 100%;
+        }
+
+        .question-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .question-content {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .difficulty-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .difficulty-easy {
+            background-color: #4CAF50;
+        }
+
+        .difficulty-medium {
+            background-color: #FF9800;
+        }
+
+        .difficulty-hard {
+            background-color: #F44336;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .snake-ladder-info {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .snake-sample, .ladder-sample {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+
+        .snake-sample {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .ladder-sample {
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+        }
+
+        .bonus-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .bonus-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .bonus-easy {
+            color: #4CAF50;
+        }
+
+        .bonus-medium {
+            color: #FF9800;
+        }
+
+        .bonus-hard {
+            color: #F44336;
+        }
+
+        @media (max-width: 768px) {
+            .game-board {
+                max-width: 90vw;
+            }
+            
+            .player {
+                min-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quiz Tower: Rise of the Mind</h1>
+
+        
+        <div class="game-info">
+            <div class="player player-1 active">
+                <div class="player-icon">1</div>
+                <div class="player-details">
+                    <div class="player-name">Pemain 1</div>
+                    <div class="player-position">Posisi: 1</div>
+                </div>
+            </div>
+            <div class="player player-2">
+                <div class="player-icon">2</div>
+                <div class="player-details">
+                    <div class="player-name">Pemain 2</div>
+                    <div class="player-position">Posisi: 1</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="board-container">
+                <div class="game-board" id="gameBoard">
+                    <!-- Papan permainan akan di-generate oleh JavaScript -->
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="dice-container">
+                    <div class="dice" id="dice">🎲</div>
+                </div>
+                <div class="game-message" id="gameMessage">Giliran Pemain 1 - Klik dadu untuk bermain</div>
+                <div class="bonus-info">
+                    <div class="bonus-item bonus-easy">Mudah: +1 langkah</div>
+                    <div class="bonus-item bonus-medium">Sedang: +2 langkah</div>
+                    <div class="bonus-item bonus-hard">Sulit: +4 langkah</div>
+                </div>
+            </div>
+            
+            <div class="snake-ladder-info">
+                <div class="info-item">
+                    <div class="snake-sample"></div>
+                    <span>Ular - Turun ke kotak lebih rendah</span>
+                </div>
+                <div class="info-item">
+                    <div class="ladder-sample"></div>
+                    <span>Tangga - Naik ke kotak lebih tinggi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="question-modal" id="questionModal">
+        <div class="question-content">
+            <div class="question-header">
+                <h2>Pertanyaan</h2>
+                <div class="difficulty-badge" id="difficultyBadge">Mudah</div>
+            </div>
+            <div class="question-text" id="questionText"></div>
+            <div class="options" id="optionsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // Konfigurasi permainan
+        const BOARD_SIZE = 10;
+        const TOTAL_CELLS = BOARD_SIZE * BOARD_SIZE;
+        let currentPlayer = 1;
+        let playerPositions = {1: 1, 2: 1};
+        let gameActive = true;
+        let usedQuestions = [];
+        
+        // Pertanyaan-pertanyaan untuk permainan dengan tingkat kesulitan
+        const questions = [
+            // Soal Mudah (+1 langkah)
+            {
+                question: "Apa nama alat musik dari Sulawesi Selatan?",
+                options: ["Kecaping", "Sape", "Angklung", "Ole-ole"],
+                correct: 0,
+                difficulty: "easy"
+            },
+            {
+                question: "Apa nama tarian daerah sebagai identitas daerah Sumatra Barat?",
+                options: ["Tari kecak", "Tari rudat", "Tari piring", "Tari remo"],
+                correct: 2,
+                difficulty: "easy"
+            },
+            {
+                question: "Apa nama rumah adat yang terkenal di Sulawesi Selatan?",
+                options: ["Honai", "Angkul-angkul", "Joglo", "Tongkonan"],
+                correct: 3,
+                difficulty: "easy"
+            },
+            {
+                question: "Fakta menarik dari papeda adalah berasal dari pohon sagu dan sudah menjadi makanan sehari-hari bagi masyarakat daerah?",
+                options: ["NTT", "Kalimantan Tengah", "Maluku", "Sulawesi Utara"],
+                correct: 2,
+                difficulty: "easy"
+            },
+            {
+                question: "Nama planet ke-7 dalam tata surya?",
+                options: ["Merkurius", "Saturnus", "Uranus", "Neptunus"],
+                correct: 2,
+                difficulty: "easy"
+            },
+            {
+                question: "Apa nama ibu kota dari negara Swiss?",
+                options: ["Amsterdam", "Bern", "Moskow", "Lisboa"],
+                correct: 1,
+                difficulty: "easy"
+            },
+            {
+                question: "Apa nama ibu kota dari negara Thailand?",
+                options: ["Bangkok", "Jakarta", "Manila", "Naypyidaw"],
+                correct: 0,
+                difficulty: "easy"
+            },
+            {
+                question: "Gudeg merupakan sebuah makanan tradisional dari buah nangka yang berasal dari kota?",
+                options: ["Jayapura", "Bandung", "Mataram", "Yogyakarta"],
+                correct: 3,
+                difficulty: "easy"
+            },
+            {
+                question: "Siapakah nama bapak pendidikan Indonesia?",
+                options: ["Soeharto", "Tan Malaka", "Bung Tomo", "Ki Hajar Dewantara"],
+                correct: 3,
+                difficulty: "easy"
+            },
+            {
+                question: "Apa nama kerajaan Islam pertama kali di Indonesia?",
+                options: ["Kerajaan Majapahit", "Kerajaan Perlak", "Kerajaan Gowa", "Kerajaan Mataram"],
+                correct: 1,
+                difficulty: "easy"
+            },
+            
+            // Soal Sedang (+2 langkah)
+            {
+                question: "Hewan pemakan tumbuhan disebut?",
+                options: ["Karnivora", "Herbivora", "Meiosis", "Omnivora"],
+                correct: 1,
+                difficulty: "medium"
+            },
+            {
+                question: "Organ penting dalam tubuh manusia yang bertanggung jawab atas berbagai fungsi yang mendukung metabolisme, kekebalan tubuh, pencernaan, dan penyimpanan vitamin disebut?",
+                options: ["Usus", "Jantung", "Lambung", "Hati"],
+                correct: 3,
+                difficulty: "medium"
+            },
+            {
+                question: "Untuk membuat 5 potong kue, Cici membutuhkan telur 1/2 kg. Berapa telur yang dibutuhkan Cici jika ingin membuat 50 potong kue?",
+                options: ["6,5 kg", "7 kg", "5,5 kg", "5 kg"],
+                correct: 3,
+                difficulty: "medium"
+            },
+            {
+                question: "Jika bilangan 2x - 5 = 9, berapakah nilai x nya?",
+                options: ["6", "3", "7", "5"],
+                correct: 2,
+                difficulty: "medium"
+            },
+            {
+                question: "Gaya yang lahir dari elastisitas suatu benda seperti pada permainan trampolin disebut?",
+                options: ["Gaya gesek", "Gaya pressing", "Gaya magnet", "Gaya pegas"],
+                correct: 3,
+                difficulty: "medium"
+            },
+            {
+                question: "Ilmu yang mempelajari tentang peta disebut?",
+                options: ["Kartografi", "Arkeologi", "Geografi", "Mitiologi"],
+                correct: 0,
+                difficulty: "medium"
+            },
+            {
+                question: "Sebuah benda didorong oleh dua gaya 20 newton ke kanan dan 15 newton ke kiri. Berapakah resultan gaya yang bekerja pada benda tersebut?",
+                options: ["5 newton", "4 newton", "9 newton", "8 newton"],
+                correct: 0,
+                difficulty: "medium"
+            },
+            {
+                question: "Sebutkan letak astronomis tentang negara Indonesia",
+                options: [
+                    "5° LU-11 LS dan 95° BT 141°", 
+                    "1° LU-7° LU dan 100° BT-119° BT", 
+                    "6° LU-11 LS dan 95° BT-141° BT", 
+                    "10° LS-44° LS dan 133° BT-154° BT"
+                ],
+                correct: 2,
+                difficulty: "medium"
+            },
+            {
+                question: "Patrionalisme dan Nasionalisme merupakan paham pemikiran yang selaras dengan isi pokok pikiran UUD 1945 pada alinea ke?",
+                options: ["Satu", "Ketiga", "Keempat", "Kedua"],
+                correct: 2,
+                difficulty: "medium"
+            },
+            {
+                question: "Suatu sikap batin yang dilandasi ketulusan dan keikhlasan untuk berjuang atau berkorban demi kejayaan dan kebahagiaan bangsa disebut?",
+                options: ["Pluralisme", "Patriotisme", "Sentimisme", "Nasionalisme"],
+                correct: 1,
+                difficulty: "medium"
+            },
+            
+            // Soal Sulit (+4 langkah)
+            {
+                question: "Manakah senyawa berikut ini yang merupakan reaktan awal dan produk akhir dari siklus Krebs?",
+                options: ["Piruvat", "Glukosa", "Asam sitrat", "Asam oksaloasetat"],
+                correct: 3,
+                difficulty: "hard"
+            },
+            {
+                question: "Kloroplas merupakan organel tempat fotosintesis berlangsung. Struktur kloroplas terdiri dari beberapa bagian seperti stroma dan tilakoid. Senyawa manakah di bawah ini yang merupakan hasil reaksi pada tilakoid yang akan digunakan pada reaksi di stroma?",
+                options: ["CO2 dan H2O", "NADP dan ADP", "ATP dan NADPH", "Glukosa dan O2"],
+                correct: 2,
+                difficulty: "hard"
+            },
+            {
+                question: "Bila persen hasil reaksi: 3NO2(g) + H2O (l) → 2HNO3 (aq) + NO (g) adalah 75% dan dalam reaksi tersebut dikonsumsi sebanyak 4,5 g gas NO2, maka massa (dalam satuan gram) asam nitrat, HNO3 (aq) yang dihasilkan adalah",
+                options: ["2,25 g", "3,08 g", "4,12 g", "6,93 g"],
+                correct: 1,
+                difficulty: "hard"
+            },
+            {
+                question: "Bila Cu (CN)2 dipanaskan, dihasilkan C2N2 (sianogen) dan CuCN. Massa Cu(CN)2 yang dibutuhkan untuk membuat C2N2 sebanyak 5,00 g adalah?",
+                options: ["20,2 g", "22,2 g", "24,2 g", "26,2 g"],
+                correct: 1,
+                difficulty: "hard"
+            },
+            {
+                question: "Di Indonesia, peristiwa yang paling sering terjadi pada saat musim hujan yang ditunjukkan oleh adanya pertumbuhan awan-awan vertikal besar adalah?",
+                options: ["Hujan batu", "Petir", "Badai tropis", "Siklon tropis"],
+                correct: 1,
+                difficulty: "hard"
+            },
+            {
+                question: "Suatu sistem terdiri dari dua pegas yang dihubungkan secara seri dan mempunyai konstanta pegas K1 = 3,2 N/m dan K2 = 4,5 N/m. Usaha minimum yang harus dilakukan untuk meregangkan sistem ini sejauh s = 2,5 cm adalah ... mJ.",
+                options: ["0.8 mJ", "0.3 mJ", "0.6 mJ", "0.7 mJ"],
+                correct: 2,
+                difficulty: "hard"
+            },
+            {
+                question: "Angka satuan dari hasil 2²⁰²⁵ x 3²⁵⁴¹ adalah?",
+                options: ["2", "6", "8", "4"],
+                correct: 1,
+                difficulty: "hard"
+            },
+            {
+                question: "Diketahui suku banyak P(x) = 3x⁴ - 2x³ + Ax² + By - 8. Jika p(x) habis dibagi (x - 2) dan (x - 1) maka B - A =",
+                options: ["-45", "26", "45", "7"],
+                correct: 2,
+                difficulty: "hard"
+            },
+            {
+                question: "Pada suatu barisan aritmetika diketahui suku ke-8 adalah 31 dan suku ke-14 adalah 55. Suku ke-22 dari barisan tersebut adalah?",
+                options: ["83", "86", "84", "87"],
+                correct: 3,
+                difficulty: "hard"
+            },
+            {
+                question: "Jika diskon 30% dari Rp150.000, maka harga setelah diskon adalah?",
+                options: ["Rp100.000", "Rp105.000", "Rp110.000", "Rp115.000"],
+                correct: 1,
+                difficulty: "hard"
+            }
+        ];
+        
+        // Posisi ular dan tangga
+        const snakes = {
+            16: 5,
+            47: 34,
+            49: 32,
+            56: 45,
+            62: 59,
+            64: 57,
+            87: 74,
+            93: 88,
+            95: 86,
+            98: 83
+        };
+        
+        const ladders = {
+            1: 1,
+            4: 17,
+            9: 12,
+            21: 40,
+            28: 33,
+            36: 45,
+            51: 70,
+            71: 90,
+            80: 81
+        };
+        
+        // Inisialisasi papan permainan
+        function initializeBoard() {
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+            
+            // Buat sel papan secara zig-zag
+            for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                const isEvenRow = row % 2 === 0;
+                
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const cellIndex = isEvenRow 
+                        ? row * BOARD_SIZE + col + 1 
+                        : row * BOARD_SIZE + (BOARD_SIZE - col);
+                    
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${cellIndex}`;
+                    cell.textContent = cellIndex;
+                    
+                    // Tambahkan kelas khusus untuk sel tertentu
+                    if (cellIndex === 1) {
+                        cell.classList.add('start');
+                    } else if (cellIndex === TOTAL_CELLS) {
+                        cell.classList.add('finish');
+                    } else if (snakes[cellIndex]) {
+                        cell.classList.add('snake');
+                    } else if (ladders[cellIndex]) {
+                        cell.classList.add('ladder');
+                    }
+                    
+                    gameBoard.appendChild(cell);
+                }
+            }
+            
+            // Tambahkan piece pemain
+            updatePlayerPieces();
+        }
+        
+        // Update posisi piece pemain di papan
+        function updatePlayerPieces() {
+            // Hapus piece yang ada
+            document.querySelectorAll('.player-piece').forEach(piece => piece.remove());
+            
+            // Tambahkan piece untuk setiap pemain
+            for (const [player, position] of Object.entries(playerPositions)) {
+                const cell = document.getElementById(`cell-${position}`);
+                if (cell) {
+                    const piece = document.createElement('div');
+                    piece.className = `player-piece player-${player}-piece`;
+                    cell.appendChild(piece);
+                }
+            }
+            
+            // Update informasi pemain
+            document.querySelectorAll('.player').forEach((playerEl, index) => {
+                const playerNum = index + 1;
+                playerEl.classList.toggle('active', playerNum === currentPlayer);
+                playerEl.querySelector('.player-position').textContent = `Posisi: ${playerPositions[playerNum]}`;
+            });
+        }
+        
+        // Dapatkan pertanyaan acak yang belum digunakan
+        function getRandomQuestion() {
+            // Jika semua pertanyaan sudah digunakan, reset daftar pertanyaan yang digunakan
+            if (usedQuestions.length >= questions.length) {
+                usedQuestions = [];
+            }
+            
+            // Cari pertanyaan yang belum digunakan
+            let availableQuestions = questions.filter((_, index) => !usedQuestions.includes(index));
+            
+            // Jika tidak ada pertanyaan yang tersedia, reset daftar
+            if (availableQuestions.length === 0) {
+                usedQuestions = [];
+                availableQuestions = questions;
+            }
+            
+            // Pilih pertanyaan acak dari yang tersedia
+            const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+            const selectedQuestion = availableQuestions[randomIndex];
+            
+            // Tandai pertanyaan sebagai digunakan
+            const originalIndex = questions.findIndex(q => q === selectedQuestion);
+            usedQuestions.push(originalIndex);
+            
+            return selectedQuestion;
+        }
+        
+        // Tampilkan pertanyaan
+        function showQuestion() {
+            const randomQuestion = getRandomQuestion();
+            const questionModal = document.getElementById('questionModal');
+            const questionText = document.getElementById('questionText');
+            const optionsContainer = document.getElementById('optionsContainer');
+            const difficultyBadge = document.getElementById('difficultyBadge');
+            
+            questionText.textContent = randomQuestion.question;
+            optionsContainer.innerHTML = '';
+            
+            // Set badge kesulitan
+            difficultyBadge.textContent = 
+                randomQuestion.difficulty === "easy" ? "Mudah" : 
+                randomQuestion.difficulty === "medium" ? "Sedang" : "Sulit";
+            
+            difficultyBadge.className = "difficulty-badge " + 
+                (randomQuestion.difficulty === "easy" ? "difficulty-easy" : 
+                 randomQuestion.difficulty === "medium" ? "difficulty-medium" : "difficulty-hard");
+            
+            randomQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => {
+                    handleAnswer(index === randomQuestion.correct, randomQuestion.difficulty);
+                    questionModal.style.display = 'none';
+                });
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            questionModal.style.display = 'flex';
+        }
+        
+        // Handle jawaban pertanyaan
+        function handleAnswer(isCorrect, difficulty) {
+            if (isCorrect) {
+                let steps = 1;
+                let bonusMessage = "";
+                
+                // Tentukan jumlah langkah berdasarkan tingkat kesulitan
+                if (difficulty === "easy") {
+                    steps = 1;
+                    bonusMessage = "Soal mudah, dapat +1 langkah!";
+                } else if (difficulty === "medium") {
+                    steps = 2;
+                    bonusMessage = "Soal sedang, dapat +2 langkah!";
+                } else if (difficulty === "hard") {
+                    steps = 4;
+                    bonusMessage = "Soal sulit, dapat +4 langkah!";
+                }
+                
+                document.getElementById('gameMessage').textContent = 
+                    `Jawaban Pemain ${currentPlayer} benar! ${bonusMessage}`;
+                movePlayer(steps);
+            } else {
+                document.getElementById('gameMessage').textContent = 
+                    `Jawaban Pemain ${currentPlayer} salah! Giliran dilewati.`;
+                switchPlayer();
+            }
+        }
+        
+        // Gerakkan pemain
+        function movePlayer(steps) {
+            const newPosition = playerPositions[currentPlayer] + steps;
+            
+            if (newPosition > TOTAL_CELLS) {
+                document.getElementById('gameMessage').textContent = 
+                    `Pemain ${currentPlayer} melebihi kotak finish! Tetap di posisi sebelumnya.`;
+                switchPlayer();
+                return;
+            }
+            
+            playerPositions[currentPlayer] = newPosition;
+            
+            // Cek apakah pemain mendarat di ular atau tangga
+            if (snakes[newPosition]) {
+                document.getElementById('gameMessage').textContent += 
+                    ` Pemain ${currentPlayer} bertemu ular! Turun ke kotak ${snakes[newPosition]}`;
+                playerPositions[currentPlayer] = snakes[newPosition];
+            } else if (ladders[newPosition]) {
+                document.getElementById('gameMessage').textContent += 
+                    ` Pemain ${currentPlayer} menemukan tangga! Naik ke kotak ${ladders[newPosition]}`;
+                playerPositions[currentPlayer] = ladders[newPosition];
+            }
+            
+            updatePlayerPieces();
+            
+            // Cek apakah pemain menang
+            if (playerPositions[currentPlayer] === TOTAL_CELLS) {
+                document.getElementById('gameMessage').textContent = 
+                    `Selamat! Pemain ${currentPlayer} menang!`;
+                gameActive = false;
+                document.getElementById('dice').style.cursor = 'default';
+                return;
+            }
+            
+            // Ganti pemain
+            switchPlayer();
+        }
+        
+        // Ganti giliran pemain
+        function switchPlayer() {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            document.getElementById('gameMessage').textContent += ` Giliran Pemain ${currentPlayer}`;
+            updatePlayerPieces();
+        }
+        
+        // Event listener untuk tombol dadu
+        document.getElementById('dice').addEventListener('click', () => {
+            if (gameActive) {
+                showQuestion();
+            }
+        });
+        
+        // Inisialisasi permainan
+        initializeBoard();
+    </script>
+</body>
+</html>
